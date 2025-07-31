@@ -9,16 +9,19 @@ import TrackOrderPage from './pages/TrackOrderPage';
 import LoginPage from './pages/LoginPage';
 import PaymentPage from './pages/PaymentPage';
 import AdminDashboard from './pages/AdminDashboard';
-import { Page, CartItem, Product, User, Order } from './types';
+import ShopkeeperDashboard from './pages/ShopkeeperDashboard';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Page, CartItem, Product, Order } from './types';
 import { SAMPLE_PRODUCTS } from './utils/constants';
 
-function App() {
+function AppContent() {
+  const { currentUser, loading } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [user, setUser] = useState<User | null>(null);
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isShopkeeper, setIsShopkeeper] = useState(false);
 
   // Calculate total cart items
   const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0);
@@ -65,12 +68,16 @@ function App() {
     setCurrentPage('products');
   };
 
-  // Handle login
-  const handleLogin = (userData: User) => {
-    setUser(userData);
-    setIsAdmin(userData.role === 'admin');
-    setCurrentPage('home');
-  };
+  // Update admin and shopkeeper status when user changes
+  useEffect(() => {
+    if (currentUser) {
+      setIsAdmin(currentUser.role === 'admin');
+      setIsShopkeeper(currentUser.role === 'shopkeeper');
+    } else {
+      setIsAdmin(false);
+      setIsShopkeeper(false);
+    }
+  }, [currentUser]);
 
   // Handle order placement
   const handlePlaceOrder = (orderData: Omit<Order, 'id'>) => {
@@ -151,7 +158,7 @@ function App() {
       case 'login':
         return (
           <LoginPage 
-            onLogin={handleLogin}
+            onLogin={() => {}} // Firebase handles login automatically
             onPageChange={handlePageChange}
           />
         );
@@ -165,6 +172,15 @@ function App() {
             onPageChange={handlePageChange}
           />
         );
+      case 'shopkeeper':
+      case 'shopkeeper-orders':
+      case 'shopkeeper-products':
+      case 'shopkeeper-analytics':
+        return (
+          <ShopkeeperDashboard 
+            onPageChange={handlePageChange}
+          />
+        );
       default:
         return (
           <HomePage 
@@ -175,6 +191,15 @@ function App() {
     }
   };
 
+  // Show loading spinner while Firebase initializes
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar 
@@ -182,12 +207,22 @@ function App() {
         onPageChange={handlePageChange}
         cartItemsCount={cartItemsCount}
         isAdmin={isAdmin}
+        isShopkeeper={isShopkeeper}
+        currentUser={currentUser}
       />
       
       <main className="pb-20 md:pb-8">
         {renderCurrentPage()}
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

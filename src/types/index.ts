@@ -40,7 +40,7 @@ export interface User {
   name: string;
   email: string;
   phone: string;
-  role?: 'customer' | 'admin';
+  role?: 'customer' | 'admin' | 'shopkeeper';
 }
 
 export interface Rider {
@@ -63,4 +63,20 @@ export interface AdminStats {
   averageDeliveryTime: string;
 }
 
-export type Page = 'home' | 'categories' | 'products' | 'cart' | 'checkout' | 'track-order' | 'login' | 'payment' | 'admin' | 'admin-orders' | 'admin-products' | 'admin-riders' | 'admin-analytics';
+export interface ShopkeeperStats {
+  totalOrders: number;
+  pendingOrders: number;
+  completedOrders: number;
+  totalRevenue: number;
+  averageOrderValue: number;
+  topProducts: Product[];
+}
+
+export interface ShopkeeperOrder extends Order {
+  customerName: string;
+  customerPhone: string;
+  orderTime: string;
+  estimatedPickupTime: string;
+}
+
+export type Page = 'home' | 'categories' | 'products' | 'cart' | 'checkout' | 'track-order' | 'login' | 'payment' | 'admin' | 'admin-orders' | 'admin-products' | 'admin-riders' | 'admin-analytics' | 'shopkeeper' | 'shopkeeper-orders' | 'shopkeeper-products' | 'shopkeeper-analytics';

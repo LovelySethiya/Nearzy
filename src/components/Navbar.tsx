@@ -1,22 +1,41 @@
 import React from 'react';
-import { ShoppingCart, User, Home, Grid3X3, Package, LogIn, Settings } from 'lucide-react';
-import { Page } from '../types';
+import { ShoppingCart, User, Home, Grid3X3, Package, LogIn, Settings, LogOut } from 'lucide-react';
+import { Page, User as UserType } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 interface NavbarProps {
   currentPage: Page;
   onPageChange: (page: Page) => void;
   cartItemsCount: number;
   isAdmin?: boolean;
+  isShopkeeper?: boolean;
+  currentUser?: UserType | null;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ currentPage, onPageChange, cartItemsCount, isAdmin = false }) => {
-  const navItems = [
+const Navbar: React.FC<NavbarProps> = ({ currentPage, onPageChange, cartItemsCount, isAdmin = false, isShopkeeper = false, currentUser }) => {
+  const { signOut } = useAuth();
+  
+  type NavItem = {
+    id: Page;
+    label: string;
+    icon: React.ComponentType<{ size?: number }>;
+    badge?: number;
+    action?: () => void;
+  };
+  
+  const navItems: NavItem[] = [
     { id: 'home' as Page, label: 'Home', icon: Home },
     { id: 'categories' as Page, label: 'Categories', icon: Grid3X3 },
     { id: 'cart' as Page, label: 'Cart', icon: ShoppingCart, badge: cartItemsCount },
     { id: 'track-order' as Page, label: 'Orders', icon: Package },
-    { id: 'login' as Page, label: 'Profile', icon: User },
-    ...(isAdmin ? [{ id: 'admin' as Page, label: 'Admin', icon: Settings }] : [])
+    ...(currentUser ? [
+      { id: 'login' as Page, label: currentUser.name, icon: User },
+      { id: 'logout' as Page, label: 'Sign Out', icon: LogOut, action: signOut }
+    ] : [
+      { id: 'login' as Page, label: 'Login', icon: LogIn }
+    ]),
+    ...(isAdmin ? [{ id: 'admin' as Page, label: 'Admin', icon: Settings }] : []),
+    ...(isShopkeeper ? [{ id: 'shopkeeper' as Page, label: 'Shop', icon: Settings }] : [])
   ];
 
   return (
@@ -42,7 +61,13 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onPageChange, cartItemsCou
               return (
                 <button
                   key={item.id}
-                  onClick={() => onPageChange(item.id)}
+                  onClick={() => {
+                    if (item.action) {
+                      item.action();
+                    } else {
+                      onPageChange(item.id);
+                    }
+                  }}
                   className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 relative ${
                     currentPage === item.id
                       ? 'text-green-600 bg-green-50'
@@ -78,7 +103,13 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onPageChange, cartItemsCou
             return (
               <button
                 key={item.id}
-                onClick={() => onPageChange(item.id)}
+                onClick={() => {
+                  if (item.action) {
+                    item.action();
+                  } else {
+                    onPageChange(item.id);
+                  }
+                }}
                 className={`flex flex-col items-center p-2 relative ${
                   currentPage === item.id ? 'text-green-600' : 'text-gray-600'
                 }`}
